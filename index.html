@@ -54,10 +54,14 @@
       </div>
       <div class="topbar-right">
         <div class="search-box">
+        <div class="sheet-controls">
+          <input type="text" id="sheetUrlInput" class="sheet-input" placeholder="Dán link Google Sheet public hoặc link CSV export..." />
+          <button class="export-btn" id="loadSheetBtn">Tải dữ liệu Sheet</button>
+        </div>
           <input type="text" id="globalSearch" placeholder="Tìm kiếm khách hàng, đơn hàng..." />
           <span class="search-icon">&#128269;</span>
         </div>
-        <div class="date-badge">&#128197; Năm 2026</div>
+        <div class="date-badge" id="dataSourceBadge">&#128197; Dữ liệu mặc định</div>
         <button class="export-btn" id="exportBtn">&#8659; Xuất CSV</button>
       </div>
     </div>

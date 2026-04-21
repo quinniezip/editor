@@ -5,7 +5,7 @@ const MONTHS = ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'];
 const REVENUE_2026 = [285, 312, 348, 295, 420, 388, 452, 410, 395, 465, 502, 548];
 const REVENUE_2025 = [240, 265, 290, 255, 360, 330, 390, 355, 340, 400, 435, 475];
 
-const PRODUCTS = [
+let PRODUCTS = [
   { id: 'SP001', name: 'iPhone 16 Pro Max',    category: 'Điện tử',  price: 32990000, stock: 45,  sold: 312, rating: 4.8 },
   { id: 'SP002', name: 'MacBook Pro M4',        category: 'Điện tử',  price: 54990000, stock: 23,  sold: 187, rating: 4.9 },
   { id: 'SP003', name: 'Áo Thun Premium',       category: 'Thời trang', price: 450000,  stock: 320, sold: 892, rating: 4.5 },
@@ -56,7 +56,7 @@ function genDate(startY=1, endY=12) {
   return `2026-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
 }
 
-const CUSTOMERS = Array.from({length: 80}, (_, i) => {
+let CUSTOMERS = Array.from({length: 80}, (_, i) => {
   const name = genName();
   const seg = pickWeighted(SEGMENTS, [0.12, 0.28, 0.35, 0.25]);
   const totalOrders = seg === 'VIP' ? rand(20,50) : seg === 'Thân thiết' ? rand(8,20) : seg === 'Mới' ? rand(1,5) : rand(3,12);
@@ -77,7 +77,7 @@ const CUSTOMERS = Array.from({length: 80}, (_, i) => {
 
 // Generate orders
 let orderCounter = 1;
-const ORDERS = [];
+let ORDERS = [];
 CUSTOMERS.forEach(cust => {
   const count = Math.min(cust.totalOrders, rand(1, 8));
   for (let j = 0; j < count; j++) {
@@ -103,16 +103,17 @@ CUSTOMERS.forEach(cust => {
 ORDERS.sort(() => Math.random() - 0.5);
 
 // ===== COMPUTED STATS =====
-const totalRevenue = ORDERS.filter(o => o.status === 'Hoàn thành').reduce((s, o) => s + o.value, 0);
-const totalOrders = ORDERS.length;
-const totalCustomers = CUSTOMERS.length;
-const avgOrderValue = Math.round(totalRevenue / ORDERS.filter(o=>o.status==='Hoàn thành').length);
+let totalRevenue = 0;
+let totalOrders = 0;
+let totalCustomers = 0;
+let avgOrderValue = 0;
 
 // ===== CHART INSTANCES =====
 let revenueChart, segmentChart, productChart, orderStatusChart, compareChart, paymentChart, newVsReturnChart;
 
 // ===== INIT =====
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  recalculateDerivedData();
   updateKPIs();
   renderRecentOrders();
   renderCustomersTable();
@@ -120,8 +121,182 @@ document.addEventListener('DOMContentLoaded', () => {
   renderProductsTable();
   initCharts();
   bindEvents();
-  showToast('Chào mừng! Dữ liệu 2026 đã được tải.', 'success');
+
+  const defaultSheetUrl = 'https://docs.google.com/spreadsheets/d/1LtIb1BDQnNaDLNrhNKpH_5P66koD-X0wMh0zrL6jAT4/edit?gid=0#gid=0';
+  document.getElementById('sheetUrlInput').value = defaultSheetUrl;
+  const loaded = await loadGoogleSheetData(defaultSheetUrl, false);
+  if (!loaded) {
+    showToast('Chào mừng! Đang dùng dữ liệu mẫu (hãy public Google Sheet để tải tự động).', '');
+  }
 });
+
+
+function recalculateDerivedData() {
+  totalRevenue = ORDERS.filter(o => o.status === 'Hoàn thành').reduce((sum, o) => sum + (Number(o.value) || 0), 0);
+  totalOrders = ORDERS.length;
+  totalCustomers = CUSTOMERS.length;
+  const completedCount = ORDERS.filter(o => o.status === 'Hoàn thành').length;
+  avgOrderValue = completedCount ? Math.round(totalRevenue / completedCount) : 0;
+  filteredCustomers = [...CUSTOMERS];
+  filteredOrders = [...ORDERS];
+}
+
+function normalizeText(str) {
+  return String(str || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
+
+function parseCurrency(raw) {
+  const cleaned = String(raw || '').replace(/[^0-9.-]/g, '');
+  const num = Number(cleaned);
+  return Number.isFinite(num) ? num : 0;
+}
+
+function parseSheetUrlToCsv(url) {
+  if (!url) return null;
+  if (url.includes('output=csv') || url.includes('tqx=out:csv')) return url;
+  const matched = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+  const gidMatch = url.match(/[?&#]gid=([0-9]+)/);
+  if (!matched) return null;
+  const sheetId = matched[1];
+  const gid = gidMatch ? gidMatch[1] : '0';
+  return `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&gid=${gid}`;
+}
+
+function parseCsv(text) {
+  const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/).filter(Boolean);
+  if (!lines.length) return [];
+  const rows = lines.map(line => {
+    const out = [];
+    let cur = '', inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuotes && line[i + 1] === '"') { cur += '"'; i++; }
+        else inQuotes = !inQuotes;
+      } else if (ch === ',' && !inQuotes) { out.push(cur); cur = ''; }
+      else cur += ch;
+    }
+    out.push(cur);
+    return out.map(v => v.trim());
+  });
+  const headers = rows[0];
+  return rows.slice(1).map(row => Object.fromEntries(headers.map((h, i) => [h, row[i] || ''])));
+}
+
+function findKeyByCandidates(obj, candidates) {
+  const byNorm = Object.keys(obj).reduce((acc, k) => { acc[normalizeText(k)] = k; return acc; }, {});
+  for (const c of candidates) {
+    const hit = Object.keys(byNorm).find(key => key.includes(normalizeText(c)));
+    if (hit) return byNorm[hit];
+  }
+  return null;
+}
+
+function buildDataFromSheetRows(rows) {
+  if (!rows.length) return null;
+  const first = rows[0];
+  const keyDate = findKeyByCandidates(first, ['ngày', 'date']);
+  const keyOrderId = findKeyByCandidates(first, ['mã đơn', 'order id', 'id đơn']);
+  const keyCustomer = findKeyByCandidates(first, ['khách', 'customer']);
+  const keyProduct = findKeyByCandidates(first, ['sản phẩm', 'product']);
+  const keyQty = findKeyByCandidates(first, ['số lượng', 'qty', 'sl']);
+  const keyValue = findKeyByCandidates(first, ['giá trị', 'doanh thu', 'revenue', 'amount']);
+  const keyStatus = findKeyByCandidates(first, ['trạng thái', 'status']);
+  const keyPayment = findKeyByCandidates(first, ['thanh toán', 'payment']);
+
+  if (!keyCustomer || !keyValue) return null;
+
+  ORDERS = rows.map((r, idx) => ({
+    id: r[keyOrderId] || `DH${String(idx + 1).padStart(5, '0')}`,
+    customerId: `KH${String(idx + 1).padStart(4, '0')}`,
+    customerName: r[keyCustomer] || `Khách ${idx + 1}`,
+    product: keyProduct ? r[keyProduct] || 'Sản phẩm' : 'Sản phẩm',
+    productId: `SP${String(idx + 1).padStart(4, '0')}`,
+    qty: Number(r[keyQty]) || 1,
+    date: keyDate ? (r[keyDate] || '2026-01-01') : '2026-01-01',
+    value: parseCurrency(r[keyValue]),
+    payment: keyPayment ? (r[keyPayment] || 'Không rõ') : 'Không rõ',
+    status: keyStatus ? (r[keyStatus] || 'Hoàn thành') : 'Hoàn thành',
+  })).filter(o => o.value > 0);
+
+  const customerMap = new Map();
+  for (const o of ORDERS) {
+    if (!customerMap.has(o.customerName)) {
+      customerMap.set(o.customerName, {
+        id: `KH${String(customerMap.size + 1).padStart(4,'0')}`,
+        name: o.customerName,
+        email: genEmail(o.customerName),
+        phone: genPhone(),
+        province: pick(PROVINCES),
+        segment: pick(SEGMENTS),
+        totalOrders: 0,
+        totalSpent: 0,
+        lastOrder: o.date,
+        joinDate: o.date,
+      });
+    }
+    const c = customerMap.get(o.customerName);
+    c.totalOrders += 1;
+    c.totalSpent += o.value;
+    if (String(o.date) > String(c.lastOrder)) c.lastOrder = o.date;
+    o.customerId = c.id;
+  }
+  CUSTOMERS = Array.from(customerMap.values());
+
+  const productMap = new Map();
+  for (const o of ORDERS) {
+    if (!productMap.has(o.product)) {
+      productMap.set(o.product, {
+        id: `SP${String(productMap.size + 1).padStart(4, '0')}`,
+        name: o.product,
+        category: 'Online Sale',
+        price: o.qty ? Math.round(o.value / o.qty) : o.value,
+        stock: rand(20, 300),
+        sold: 0,
+        rating: (Math.random() * 1 + 4).toFixed(1),
+      });
+    }
+    const p = productMap.get(o.product);
+    p.sold += o.qty;
+    o.productId = p.id;
+  }
+  PRODUCTS = Array.from(productMap.values()).map(p => ({ ...p, rating: Number(p.rating) }));
+  return ORDERS.length > 0;
+}
+
+async function loadGoogleSheetData(sheetUrl, notify = true) {
+  const csvUrl = parseSheetUrlToCsv(sheetUrl);
+  if (!csvUrl) {
+    if (notify) showToast('Link Google Sheet không hợp lệ.', 'danger');
+    return false;
+  }
+  try {
+    const response = await fetch(csvUrl);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const csvText = await response.text();
+    const rows = parseCsv(csvText);
+    const ok = buildDataFromSheetRows(rows);
+    if (!ok) {
+      if (notify) showToast('Không nhận diện được cột cần thiết trong Sheet.', 'danger');
+      return false;
+    }
+    recalculateDerivedData();
+    updateKPIs();
+    renderRecentOrders();
+    renderCustomersTable();
+    renderOrdersTable();
+    renderProductsTable();
+    initCharts();
+    const badge = document.getElementById('dataSourceBadge');
+    if (badge) badge.textContent = '📊 Dữ liệu từ Google Sheet';
+    if (notify) showToast('Đã tải dữ liệu từ Google Sheet thành công!', 'success');
+    return true;
+  } catch (error) {
+    console.error(error);
+    if (notify) showToast('Không thể tải Google Sheet. Hãy kiểm tra quyền chia sẻ (Anyone with the link).', 'danger');
+    return false;
+  }
+}
 
 function updateKPIs() {
   animateCount('kpiCustomers', totalCustomers, '', '');
@@ -156,6 +331,18 @@ function initCharts() {
   initNewVsReturnChart();
 }
 
+
+function getMonthlyRevenue() {
+  const monthRevenue = Array.from({ length: 12 }, () => 0);
+  ORDERS.forEach(o => {
+    const month = new Date(o.date).getMonth();
+    if (Number.isFinite(month) && month >= 0 && month < 12 && o.status === 'Hoàn thành') {
+      monthRevenue[month] += Number(o.value) || 0;
+    }
+  });
+  return monthRevenue.map(v => Math.round(v / 1_000_000));
+}
+
 const CHART_COLORS = ['#4f46e5','#10b981','#f59e0b','#ef4444','#8b5cf6','#3b82f6','#06b6d4','#ec4899'];
 
 function initRevenueChart(type) {
@@ -167,7 +354,7 @@ function initRevenueChart(type) {
       labels: MONTHS,
       datasets: [{
         label: 'Doanh Thu (triệu đ)',
-        data: REVENUE_2026,
+        data: getMonthlyRevenue(),
         backgroundColor: type === 'bar' ? 'rgba(79,70,229,0.7)' : 'rgba(79,70,229,0.08)',
         borderColor: '#4f46e5',
         borderWidth: 2,
@@ -246,7 +433,8 @@ function initOrderStatusChart() {
 function initCompareChart() {
   const Q = ['Q1','Q2','Q3','Q4'];
   const sum = (arr, start, end) => arr.slice(start, end).reduce((a,b)=>a+b,0);
-  const q2026 = [sum(REVENUE_2026,0,3), sum(REVENUE_2026,3,6), sum(REVENUE_2026,6,9), sum(REVENUE_2026,9,12)];
+  const revenue = getMonthlyRevenue();
+  const q2026 = [sum(revenue,0,3), sum(revenue,3,6), sum(revenue,6,9), sum(revenue,9,12)];
   const q2025 = [sum(REVENUE_2025,0,3), sum(REVENUE_2025,3,6), sum(REVENUE_2025,6,9), sum(REVENUE_2025,9,12)];
   const ctx = document.getElementById('compareChart').getContext('2d');
   compareChart = new Chart(ctx, {
@@ -410,7 +598,7 @@ function renderProductsTable() {
   const search = (document.getElementById('productSearch')?.value || '').toLowerCase();
   const cat = document.getElementById('productCategoryFilter')?.value || '';
   const filtered = PRODUCTS.filter(p =>
-    (!search || p.name.toLowerCase().includes(p.name.toLowerCase()) || p.id.toLowerCase().includes(search) || p.name.toLowerCase().includes(search)) &&
+    (!search || p.id.toLowerCase().includes(search) || p.name.toLowerCase().includes(search)) &&
     (!cat || p.category === cat)
   );
   document.getElementById('productsBody').innerHTML = filtered.map(p => `
@@ -589,6 +777,12 @@ function bindEvents() {
 
   // Export
   document.getElementById('exportBtn').addEventListener('click', exportCSV);
+
+  // Load google sheet
+  document.getElementById('loadSheetBtn').addEventListener('click', async () => {
+    const url = document.getElementById('sheetUrlInput').value.trim();
+    await loadGoogleSheetData(url, true);
+  });
 
   // Global search
   document.getElementById('globalSearch').addEventListener('input', e => {
