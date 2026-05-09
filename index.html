@@ -3,360 +3,64 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard Quản Lý Khách Hàng 2026</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <title>Thông Tin Nhượng Quyền</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Sidebar -->
-  <div class="sidebar" id="sidebar">
-    <div class="sidebar-logo">
-      <span class="logo-icon">&#9679;</span>
-      <span class="logo-text">SalePro 2026</span>
-    </div>
-    <nav class="sidebar-nav">
-      <a href="#" class="nav-item active" data-section="dashboard">
-        <span class="nav-icon">&#9781;</span> Tổng Quan
-      </a>
-      <a href="#" class="nav-item" data-section="customers">
-        <span class="nav-icon">&#128100;</span> Khách Hàng
-      </a>
-      <a href="#" class="nav-item" data-section="orders">
-        <span class="nav-icon">&#128196;</span> Đơn Hàng
-      </a>
-      <a href="#" class="nav-item" data-section="products">
-        <span class="nav-icon">&#128230;</span> Sản Phẩm
-      </a>
-      <a href="#" class="nav-item" data-section="reports">
-        <span class="nav-icon">&#128202;</span> Báo Cáo
-      </a>
-    </nav>
-    <div class="sidebar-footer">
-      <div class="user-info">
-        <div class="avatar">AD</div>
-        <div>
-          <div class="user-name">Admin</div>
-          <div class="user-role">Quản trị viên</div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <main class="container">
+    <header class="hero">
+      <h1>Cổng Thông Tin Đối Tác Nhượng Quyền</h1>
+      <p>Minh bạch chính sách chiết khấu và ước tính hoàn vốn theo mô hình tài chính của từng điểm bán.</p>
+    </header>
 
-  <!-- Main content -->
-  <div class="main" id="main">
-    <!-- Topbar -->
-    <div class="topbar">
-      <div class="topbar-left">
-        <button class="toggle-btn" id="toggleSidebar">&#9776;</button>
-        <div class="breadcrumb">
-          <span id="breadcrumbText">Tổng Quan</span>
-        </div>
-      </div>
-      <div class="topbar-right">
-        <div class="search-box">
-          <input type="text" id="globalSearch" placeholder="Tìm kiếm khách hàng, đơn hàng..." />
-          <span class="search-icon">&#128269;</span>
-        </div>
-        <div class="date-badge">&#128197; Năm 2026</div>
-        <button class="export-btn" id="exportBtn">&#8659; Xuất CSV</button>
-      </div>
-    </div>
+    <section class="card">
+      <h2>Chính sách chiết khấu hiện tại</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Cấp doanh thu tháng</th>
+            <th>Chiết khấu cơ bản</th>
+            <th>Thưởng tăng trưởng</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>&lt; 300 triệu</td><td>8%</td><td>0%</td></tr>
+          <tr><td>300 - 600 triệu</td><td>12%</td><td>+2%</td></tr>
+          <tr><td>&gt; 600 triệu</td><td>15%</td><td>+3%</td></tr>
+        </tbody>
+      </table>
+      <p class="note">* Giá trị trên có thể thay đổi theo khu vực và chương trình theo quý.</p>
+    </section>
 
-    <!-- ===== SECTION: DASHBOARD ===== -->
-    <div class="section active" id="section-dashboard">
-      <!-- KPI Cards -->
-      <div class="kpi-grid">
-        <div class="kpi-card">
-          <div class="kpi-icon kpi-blue">&#128100;</div>
-          <div class="kpi-body">
-            <div class="kpi-label">Tổng Khách Hàng</div>
-            <div class="kpi-value" id="kpiCustomers">0</div>
-            <div class="kpi-change positive">&#9650; 12.5% so với 2025</div>
-          </div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-icon kpi-green">&#128196;</div>
-          <div class="kpi-body">
-            <div class="kpi-label">Tổng Đơn Hàng</div>
-            <div class="kpi-value" id="kpiOrders">0</div>
-            <div class="kpi-change positive">&#9650; 8.3% so với 2025</div>
-          </div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-icon kpi-orange">&#128176;</div>
-          <div class="kpi-body">
-            <div class="kpi-label">Doanh Thu</div>
-            <div class="kpi-value" id="kpiRevenue">0</div>
-            <div class="kpi-change positive">&#9650; 15.7% so với 2025</div>
-          </div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-icon kpi-purple">&#128181;</div>
-          <div class="kpi-body">
-            <div class="kpi-label">Giá Trị TB / Đơn</div>
-            <div class="kpi-value" id="kpiAvg">0</div>
-            <div class="kpi-change negative">&#9660; 2.1% so với 2025</div>
-          </div>
-        </div>
+    <section class="card">
+      <h2>Bộ tính hoàn vốn (ROI / Payback)</h2>
+      <div class="grid">
+        <label>Doanh thu tháng (VNĐ)
+          <input id="revenue" type="number" min="0" value="450000000" />
+        </label>
+        <label>COGS (%)
+          <input id="cogs" type="number" min="0" max="100" step="0.1" value="38" />
+        </label>
+        <label>Chi phí vận hành tháng (VNĐ)
+          <input id="opex" type="number" min="0" value="120000000" />
+        </label>
+        <label>Phí đăng ký ban đầu (VNĐ)
+          <input id="initialFee" type="number" min="0" value="800000000" />
+        </label>
+        <label>Tỷ lệ chiết khấu áp dụng (%)
+          <input id="discountRate" type="number" min="0" max="100" step="0.1" value="12" />
+        </label>
       </div>
+      <button id="calcBtn">Tính hoàn vốn</button>
 
-      <!-- Charts row 1 -->
-      <div class="charts-row">
-        <div class="chart-card wide">
-          <div class="chart-header">
-            <h3>Doanh Thu Theo Tháng (2026)</h3>
-            <div class="chart-actions">
-              <button class="chart-btn active" data-chart="revenue" data-type="line">Line</button>
-              <button class="chart-btn" data-chart="revenue" data-type="bar">Bar</button>
-            </div>
-          </div>
-          <canvas id="revenueChart"></canvas>
-        </div>
-        <div class="chart-card">
-          <div class="chart-header">
-            <h3>Phân Khúc Khách Hàng</h3>
-          </div>
-          <canvas id="segmentChart"></canvas>
-          <div class="legend" id="segmentLegend"></div>
-        </div>
+      <div class="result" id="result">
+        <p>Lợi nhuận gộp sau COGS: <strong id="grossProfit">-</strong></p>
+        <p>Giá trị chiết khấu nhận được: <strong id="discountValue">-</strong></p>
+        <p>Lợi nhuận ròng ước tính / tháng: <strong id="netProfit">-</strong></p>
+        <p>Thời gian hoàn vốn dự kiến: <strong id="payback">-</strong></p>
       </div>
-
-      <!-- Charts row 2 -->
-      <div class="charts-row">
-        <div class="chart-card">
-          <div class="chart-header">
-            <h3>Top 5 Sản Phẩm Bán Chạy</h3>
-          </div>
-          <canvas id="productChart"></canvas>
-        </div>
-        <div class="chart-card wide">
-          <div class="chart-header">
-            <h3>Đơn Hàng Mới vs Hoàn Thành vs Hủy</h3>
-          </div>
-          <canvas id="orderStatusChart"></canvas>
-        </div>
-      </div>
-
-      <!-- Recent orders -->
-      <div class="table-card">
-        <div class="table-header">
-          <h3>Đơn Hàng Gần Đây</h3>
-          <a href="#" class="view-all" data-goto="orders">Xem tất cả &#8594;</a>
-        </div>
-        <div class="table-responsive">
-          <table id="recentOrdersTable">
-            <thead>
-              <tr>
-                <th>Mã Đơn</th>
-                <th>Khách Hàng</th>
-                <th>Sản Phẩm</th>
-                <th>Ngày Đặt</th>
-                <th>Giá Trị</th>
-                <th>Trạng Thái</th>
-              </tr>
-            </thead>
-            <tbody id="recentOrdersBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== SECTION: CUSTOMERS ===== -->
-    <div class="section" id="section-customers">
-      <div class="table-card">
-        <div class="table-header">
-          <h3>Danh Sách Khách Hàng</h3>
-          <div class="table-controls">
-            <input type="text" id="customerSearch" placeholder="Tìm theo tên, email..." class="filter-input" />
-            <select id="customerSegmentFilter" class="filter-select">
-              <option value="">Tất cả phân khúc</option>
-              <option value="VIP">VIP</option>
-              <option value="Thân thiết">Thân thiết</option>
-              <option value="Mới">Mới</option>
-              <option value="Tiềm năng">Tiềm năng</option>
-            </select>
-            <button class="add-btn" id="addCustomerBtn">+ Thêm khách hàng</button>
-          </div>
-        </div>
-        <div class="table-responsive">
-          <table id="customersTable">
-            <thead>
-              <tr>
-                <th data-sort="id">ID &#8597;</th>
-                <th data-sort="name">Họ Tên &#8597;</th>
-                <th data-sort="email">Email &#8597;</th>
-                <th data-sort="phone">Điện Thoại</th>
-                <th data-sort="segment">Phân Khúc &#8597;</th>
-                <th data-sort="totalOrders">Tổng Đơn &#8597;</th>
-                <th data-sort="totalSpent">Chi Tiêu &#8597;</th>
-                <th data-sort="lastOrder">Đơn Cuối &#8597;</th>
-                <th>Hành Động</th>
-              </tr>
-            </thead>
-            <tbody id="customersBody"></tbody>
-          </table>
-        </div>
-        <div class="pagination" id="customerPagination"></div>
-      </div>
-    </div>
-
-    <!-- ===== SECTION: ORDERS ===== -->
-    <div class="section" id="section-orders">
-      <div class="table-card">
-        <div class="table-header">
-          <h3>Quản Lý Đơn Hàng</h3>
-          <div class="table-controls">
-            <input type="text" id="orderSearch" placeholder="Tìm mã đơn, khách hàng..." class="filter-input" />
-            <select id="orderStatusFilter" class="filter-select">
-              <option value="">Tất cả trạng thái</option>
-              <option value="Hoàn thành">Hoàn thành</option>
-              <option value="Đang giao">Đang giao</option>
-              <option value="Chờ xử lý">Chờ xử lý</option>
-              <option value="Đã hủy">Đã hủy</option>
-            </select>
-            <select id="orderMonthFilter" class="filter-select">
-              <option value="">Tất cả tháng</option>
-              <option value="1">Tháng 1</option>
-              <option value="2">Tháng 2</option>
-              <option value="3">Tháng 3</option>
-              <option value="4">Tháng 4</option>
-              <option value="5">Tháng 5</option>
-              <option value="6">Tháng 6</option>
-              <option value="7">Tháng 7</option>
-              <option value="8">Tháng 8</option>
-              <option value="9">Tháng 9</option>
-              <option value="10">Tháng 10</option>
-              <option value="11">Tháng 11</option>
-              <option value="12">Tháng 12</option>
-            </select>
-          </div>
-        </div>
-        <div class="table-responsive">
-          <table id="ordersTable">
-            <thead>
-              <tr>
-                <th>Mã Đơn</th>
-                <th>Khách Hàng</th>
-                <th>Sản Phẩm</th>
-                <th>SL</th>
-                <th>Ngày Đặt</th>
-                <th>Giá Trị</th>
-                <th>Phương Thức TT</th>
-                <th>Trạng Thái</th>
-                <th>Hành Động</th>
-              </tr>
-            </thead>
-            <tbody id="ordersBody"></tbody>
-          </table>
-        </div>
-        <div class="pagination" id="orderPagination"></div>
-      </div>
-    </div>
-
-    <!-- ===== SECTION: PRODUCTS ===== -->
-    <div class="section" id="section-products">
-      <div class="table-card">
-        <div class="table-header">
-          <h3>Danh Sách Sản Phẩm</h3>
-          <div class="table-controls">
-            <input type="text" id="productSearch" placeholder="Tìm sản phẩm..." class="filter-input" />
-            <select id="productCategoryFilter" class="filter-select">
-              <option value="">Tất cả danh mục</option>
-              <option value="Điện tử">Điện tử</option>
-              <option value="Thời trang">Thời trang</option>
-              <option value="Gia dụng">Gia dụng</option>
-              <option value="Thực phẩm">Thực phẩm</option>
-              <option value="Sức khỏe">Sức khỏe</option>
-            </select>
-          </div>
-        </div>
-        <div class="table-responsive">
-          <table id="productsTable">
-            <thead>
-              <tr>
-                <th>Mã SP</th>
-                <th>Tên Sản Phẩm</th>
-                <th>Danh Mục</th>
-                <th>Giá</th>
-                <th>Tồn Kho</th>
-                <th>Đã Bán</th>
-                <th>Doanh Thu</th>
-                <th>Đánh Giá</th>
-              </tr>
-            </thead>
-            <tbody id="productsBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== SECTION: REPORTS ===== -->
-    <div class="section" id="section-reports">
-      <div class="kpi-grid">
-        <div class="kpi-card">
-          <div class="kpi-icon kpi-blue">&#128200;</div>
-          <div class="kpi-body">
-            <div class="kpi-label">Tỷ Lệ Chuyển Đổi</div>
-            <div class="kpi-value">68.4%</div>
-            <div class="kpi-change positive">&#9650; 3.2% so với 2025</div>
-          </div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-icon kpi-green">&#128257;</div>
-          <div class="kpi-body">
-            <div class="kpi-label">Tỷ Lệ Giữ Chân KH</div>
-            <div class="kpi-value">82.1%</div>
-            <div class="kpi-change positive">&#9650; 5.6% so với 2025</div>
-          </div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-icon kpi-orange">&#128201;</div>
-          <div class="kpi-body">
-            <div class="kpi-label">Tỷ Lệ Hủy Đơn</div>
-            <div class="kpi-value">4.7%</div>
-            <div class="kpi-change positive">&#9660; 1.3% so với 2025</div>
-          </div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-icon kpi-purple">&#127775;</div>
-          <div class="kpi-body">
-            <div class="kpi-label">Điểm NPS Trung Bình</div>
-            <div class="kpi-value">4.6 / 5</div>
-            <div class="kpi-change positive">&#9650; 0.3 so với 2025</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="charts-row">
-        <div class="chart-card wide">
-          <div class="chart-header"><h3>So Sánh Doanh Thu Q1-Q4 (2025 vs 2026)</h3></div>
-          <canvas id="compareChart"></canvas>
-        </div>
-        <div class="chart-card">
-          <div class="chart-header"><h3>Phân Bổ Phương Thức Thanh Toán</h3></div>
-          <canvas id="paymentChart"></canvas>
-        </div>
-      </div>
-
-      <div class="charts-row">
-        <div class="chart-card wide">
-          <div class="chart-header"><h3>Khách Hàng Mới vs Khách Hàng Cũ (Theo Tháng)</h3></div>
-          <canvas id="newVsReturnChart"></canvas>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: Customer Detail -->
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal" id="modal">
-      <div class="modal-header">
-        <h3 id="modalTitle">Chi Tiết Khách Hàng</h3>
-        <button class="modal-close" id="modalClose">&times;</button>
-      </div>
-      <div class="modal-body" id="modalBody"></div>
-    </div>
-  </div>
+    </section>
+  </main>
 
   <script src="app.js"></script>
 </body>
